@@ -13,9 +13,9 @@
 #include "Polozka.h"
 #include <vector>
 #include <sys/times.h>
-#include <ctime>
+//#include <ctime>
 #include <time.h>
-#include <algorithm>
+#include <sys/resource.h>
 /*
  * 
  */
@@ -23,8 +23,9 @@ int kapacita = 0;
 int nejlepsiCena = 0;
 int polozek = 0;
 using namespace std;
-
-clock_t startCas, konecCas;
+struct rusage start;
+struct rusage konec;
+//clock_t startCas, konecCas;
 double cpuCas;
 //struct tms startBuff;
 //struct tms endBuff;
@@ -153,6 +154,15 @@ void greedy(vector<Polozka*> pripad){
 
 }
 
+double getcputime(struct rusage &ru)
+             { struct timeval tim;
+              // getrusage(RUSAGE_SELF, &ru);
+               tim=ru.ru_utime;
+               double t=(double)tim.tv_sec + (double)tim.tv_usec / 1000000.0;
+               tim=ru.ru_stime;
+               t+=(double)tim.tv_sec + (double)tim.tv_usec / 1000000.0;
+               return t; }
+
 
 
 int main(int argc, char** argv) {
@@ -174,13 +184,30 @@ int main(int argc, char** argv) {
             }
             for(int radek = 0;radek<50;++radek){
                 int i = opakovani;
-                startCas = clock();
+             //   clockid_t  * clockId;
+            //    clock_getcpuclockid(getpid(),clockId);
+             //   clock_t startCas, konecCas;
+            
+
+               // startCas = clock();
+                getrusage(RUSAGE_SELF,&start);
                 while(i>0){
             bruteforce(polozek-1,kapacita,0,pole[radek]);
             i--;
                 }
-                konecCas = clock();
-                cpuCas = ((double(konecCas)-double(startCas))/CLOCKS_PER_SEC)/opakovani;
+                getrusage(RUSAGE_SELF,&konec);
+               // konecCas = clock();
+
+               // cpuCas = ((long double)(konecCas)-(long double)(startCas));
+            //cout<<konecCas<<" : "<<startCas<<endl;
+            //if(cpuCas<0){
+              //  cpuCas = (((long double)(unsigned int)(konecCas))-(long double)(unsigned int)(startCas));
+            //}
+            //cpuCas = (cpuCas/CLOCKS_PER_SEC)/opakovani;
+                //cout<< getcputime(konec)<<endl;
+                //cout<<getcputime(start)<<endl;
+                cpuCas = (getcputime(konec)-getcputime(start))/opakovani;
+
             cout<<radek+1<<": "<<nejlepsiCena<<" |cas: "<<cpuCas<<endl;
             nejlepsiCena = 0;
             }
@@ -196,16 +223,24 @@ int main(int argc, char** argv) {
 
                 int i = opakovani;
           //      startCas = times(&startBuff);
-                startCas = clock();
+               // clock_t startCas, konecCas;
+                getrusage(RUSAGE_SELF,&start);
+             //   startCas = clock();
                 while(i>0){
             greedy(pole[radek]);
             i--;
                 }
-                    konecCas = clock();
+                getrusage(RUSAGE_SELF,&konec);
+                 //   konecCas = clock();
            // konecCas = times(&endBuff);
-            cpuCas = ((double(konecCas)-double(startCas))/CLOCKS_PER_SEC)/opakovani;
+                cpuCas = (getcputime(konec)-getcputime(start))/opakovani;
+            cout<<radek+1<<": "<<nejlepsiCena<<" |cas: "<<cpuCas<<endl;
+          /*  cpuCas = ((long double)(konecCas)-(long double)(startCas));
+            cout<<konecCas<<" : "<<startCas<<endl;
+             cpuCas = (((long double)(konecCas)-(long double)(startCas))/CLOCKS_PER_SEC)/opakovani;
             cout<<radek+1<<": "<<nejlepsiCena<<" |cas: "<<cpuCas<<endl;
             //cout<<radek+1<<": "<<nejlepsiCena<<" |cas: "<<(double)(endBuff.tms_utime-startBuff.tms_utime)*10000/CLOCKS_PER_SEC<<endl;
+             */
             nejlepsiCena = 0;
             }
         } else {
